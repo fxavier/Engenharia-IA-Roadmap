@@ -1,0 +1,115 @@
+# Ambiente local do «Balcão»: API + PostgreSQL 18 com pgvector, e Ollama opcional.
+#
+#   docker compose up -d --build --wait                                   # modelo simulado, sem rede
+#   BALCAO_MODELO_FORNECEDOR=ollama docker compose --profile ollama up -d --build --wait
+#   docker compose --profile ingestao run --rm ingest                     # reingerir (idempotente)
+#
+# A API espera pela base de dados saudável (e, com o perfil ollama, pelos modelos descarregados)
+# antes de arrancar: `depends_on` com `condition`, não `sleep`.
+
+name: balcao
+
+x-balcao-ambiente: &balcao-ambiente
+  DATABASE_URL: postgresql://balcao:balcao@db:5432/balcao
+  OLLAMA_BASE_URL: http://ollama:11434
+  BALCAO_MODELO_FORNECEDOR: ${BALCAO_MODELO_FORNECEDOR:-simulado}
+  BALCAO_MODELO_CHAT: ${BALCAO_MODELO_CHAT:-llama3.2:3b}
+  BALCAO_MODELO_EMBEDDINGS: ${BALCAO_MODELO_EMBEDDINGS:-nomic-embed-text}
+  # Tokens de laboratório; em produção a autenticação é um JWT do IdP.
+  BALCAO_TOKENS_API: ${BALCAO_TOKENS_API:-dev-aida=cliente:CL-77120,dev-nelson=cliente:CL-40311,dev-graca=cliente:CL-90004,dev-supervisor=supervisor,dev-operador=operador}
+
+services:
+  db:
+    image: pgvector/pgvector:pg18
+    environment:
+      POSTGRES_USER: balcao
+      POSTGRES_PASSWORD: balcao # só local; em produção, PostgreSQL gerido e segredo no cofre
+      POSTGRES_DB: balcao
+    volumes:
+      # Imagens postgres 18: o volume monta em /var/lib/postgresql (os dados ficam em 18/docker).
+      - pgdata:/var/lib/postgresql
+      # Corre sql/*.sql no primeiro arranque (volume vazio): extensão, tabelas, índices, funções.
+      - ./sql:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U balcao -d balcao"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+
+  ollama:
+    # Fixa a versão (OLLAMA_VERSAO=0.x.y) quando quiseres builds reprodutíveis.
+    image: ollama/ollama:${OLLAMA_VERSAO:-latest}
+    profiles: ["ollama"]
+    volumes:
+      - ollama:/root/.ollama
+    ports:
+      - "11434:11434"
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+    restart: unless-stopped
+
+  ollama-init:
+    # Descarrega os dois modelos do laboratório e sai. Da segunda vez é instantâneo (volume).
+    image: ollama/ollama:${OLLAMA_VERSAO:-latest}
+    profiles: ["ollama"]
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["/bin/sh", "-c", "ollama pull llama3.2:3b && ollama pull nomic-embed-text"]
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: balcao:local
+    environment:
+      <<: *balcao-ambiente
+      # O corpus de amostra entra no primeiro arranque, se o índice estiver vazio.
+      BALCAO_INGERIR_NO_ARRANQUE: "true"
+    env_file:
+      - path: .env
+        required: false
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      ollama-init:
+        condition: service_completed_successfully
+        required: false # só existe com --profile ollama
+    read_only: true
+    tmpfs:
+      - /tmp
+    restart: unless-stopped
+
+  ingest:
+    # Job de ingestão: `docker compose --profile ingestao run --rm ingest [--pasta /app/documentos]`.
+    image: balcao:local
+    profiles: ["ingestao"]
+    command: ["python", "-m", "balcao.ingestao"]
+    environment:
+      <<: *balcao-ambiente
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - ./documentos:/app/documentos:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+volumes:
+  pgdata:
+  ollama:

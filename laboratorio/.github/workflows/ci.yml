@@ -1,0 +1,144 @@
+# CI do «Balcão» (adr-0024): lint e tipos, testes com PostgreSQL + pgvector, evals como gate,
+# e — só na main — a imagem imutável no GHCR, etiquetada com o SHA do commit.
+#
+# Nenhum job precisa de chave de modelo: tudo corre com o fornecedor simulado (RE-03). A
+# avaliação com o modelo real é a nocturna (evals-nocturnas.yml).
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Por omissão, só leitura. O job da imagem pede o que precisa, e só ele.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+env:
+  BALCAO_MODELO_FORNECEDOR: simulado
+  UV_PYTHON: "3.13"
+
+jobs:
+  lint:
+    name: Lint e tipos
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Instalar dependências (uv.lock, sem resolver nada)
+        run: uv sync --frozen
+      - name: ruff (lint)
+        run: uv run ruff check --output-format=github .
+      - name: ruff (formato)
+        run: uv run ruff format --check .
+      - name: mypy
+        run: uv run mypy
+
+  testes:
+    name: Testes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: pgvector/pgvector:pg18
+        env:
+          POSTGRES_USER: balcao
+          POSTGRES_PASSWORD: balcao
+          POSTGRES_DB: balcao
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U balcao -d balcao"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    env:
+      # Só os testes marcados `postgres` usam esta URL; os outros correm em memória.
+      DATABASE_URL: postgresql://balcao:balcao@localhost:5432/balcao
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --frozen
+      - name: Aplicar o esquema
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/001_esquema.sql
+      - name: pytest
+        run: uv run pytest --junitxml=relatorios/junit.xml
+      - name: Resultados dos testes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit
+          path: relatorios/junit.xml
+          retention-days: 14
+
+  evals:
+    name: Evals (gate)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --frozen
+      # Conjunto dourado + red team. Sai com código 1 se alguma métrica ficar abaixo do
+      # limiar (BALCAO_GATE_*): recall@5, faithfulness, recusa correcta, tool-call
+      # accuracy e 100% dos ataques inofensivos. Um PR que piora uma delas não entra.
+      - name: Correr avaliação
+        run: uv run python -m balcao.avaliacao.correr --conjunto todos --gate --saida relatorios
+      - name: Resumo no PR
+        if: always()
+        run: cat relatorios/*.md >> "$GITHUB_STEP_SUMMARY" || true
+      - name: Relatório de avaliação
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-avaliacao
+          path: relatorios/
+          retention-days: 30
+
+  imagem:
+    name: Imagem (GHCR)
+    needs: [lint, testes, evals]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write # publicar no GHCR com o GITHUB_TOKEN, sem segredos extra
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Etiquetas
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          # Imutável: uma etiqueta por commit. Nada de `latest` a mudar debaixo do deploy.
+          tags: |
+            type=sha,format=long
+      - name: Construir e publicar
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: true

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="pt">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0f766e" />
+    <meta name="description" content="Tutorial interactivo de Engenharia de IA em Python: LLMs, RAG, embeddings e bases vectoriais, LangChain, LangGraph, agentes, avaliação, guardrails, FastAPI, Git, Docker e CI/CD — a construir o «Balcão», o assistente de suporte ao cliente de um marketplace de entregas em Maputo. Com Python no browser, chat com RAG, simuladores, quizzes e laboratórios." />
+    <title>Engenharia de IA — o projecto «Balcão»</title>
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('balcao:theme');
+          if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

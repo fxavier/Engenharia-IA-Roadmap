@@ -1,0 +1,72 @@
+# Avaliação nocturna com o modelo real (RI-07): o conjunto dourado e o red team contra a
+# versão de modelo fixada, todas as noites. Apanha o que o simulado do CI não pode apanhar —
+# um fornecedor que muda o comportamento, uma política nova que o modelo lê mal.
+#
+# A chave vem de um segredo do repositório; os nomes de modelo (com data) vêm de variáveis,
+# para se trocar de versão sem mexer no workflow. O relatório fica como artefacto 30 dias.
+name: Evals nocturnas
+
+on:
+  schedule:
+    - cron: "30 2 * * *" # 02:30 UTC = 04:30 em Maputo, fora do pico
+  workflow_dispatch:
+    inputs:
+      conjunto:
+        description: Conjunto a avaliar
+        type: choice
+        options: [todos, dourado, redteam]
+        default: todos
+
+permissions:
+  contents: read
+
+concurrency:
+  group: evals-nocturnas
+  cancel-in-progress: false
+
+jobs:
+  avaliar:
+    name: Avaliar com o modelo real
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      UV_PYTHON: "3.13"
+      BALCAO_MODELO_FORNECEDOR: ${{ vars.BALCAO_MODELO_FORNECEDOR || 'anthropic' }}
+      BALCAO_MODELO_CHAT: ${{ vars.BALCAO_MODELO_CHAT }}
+      BALCAO_MODELO_CLASSIFICAR: ${{ vars.BALCAO_MODELO_CLASSIFICAR }}
+      BALCAO_MODELO_JUIZ: ${{ vars.BALCAO_MODELO_JUIZ }}
+      # Sem Ollama no runner: embeddings da OpenAI se houver chave, senão os simulados
+      # (a nocturna mede sobretudo o modelo de resposta; a recuperação já é medida no CI).
+      BALCAO_EMBEDDINGS_FORNECEDOR: ${{ vars.BALCAO_EMBEDDINGS_FORNECEDOR || 'simulado' }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Verificar configuração
+        run: |
+          if [ -z "$BALCAO_MODELO_CHAT" ]; then
+            echo "::error::Define a variável BALCAO_MODELO_CHAT (identificador com data) nas variáveis do repositório."
+            exit 1
+          fi
+          if [ "$BALCAO_MODELO_FORNECEDOR" = "anthropic" ] && [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::error::Falta o segredo ANTHROPIC_API_KEY."
+            exit 1
+          fi
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --frozen
+      - name: Correr avaliação
+        run: |
+          uv run python -m balcao.avaliacao.correr \
+            --conjunto "${{ inputs.conjunto || 'todos' }}" --gate --saida relatorios
+      - name: Resumo
+        if: always()
+        run: cat relatorios/*.md >> "$GITHUB_STEP_SUMMARY" || true
+      - name: Relatório
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-nocturno-${{ github.run_id }}
+          path: relatorios/
+          retention-days: 30

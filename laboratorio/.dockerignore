@@ -1,0 +1,24 @@
+# O contexto de build só leva o que a imagem precisa: pyproject.toml, uv.lock, README.md,
+# src/, prompts/, dados/ e sql/. Tudo o resto fica de fora — incluindo segredos.
+
+.git
+.github
+.venv
+**/__pycache__
+**/*.pyc
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.coverage
+htmlcov
+relatorios
+tests
+docker-compose.yml
+Makefile
+.pre-commit-config.yaml
+
+# Segredos: nunca no contexto de build (o .env.example não tem segredos, mas também não faz falta).
+.env
+.env.*
+*.pem
+*.key

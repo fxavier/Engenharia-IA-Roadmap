@@ -1,0 +1,40 @@
+{
+  "name": "engenharia-ia-balcao",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Tutorial interactivo de engenharia de IA: LLMs, RAG, bases vectoriais, LangChain, LangGraph, agentes, avaliação, FastAPI, Git, Docker e CI/CD, a construir o «Balcão» — o assistente de suporte de um marketplace de entregas em Maputo.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b",
+    "pretest": "esbuild src/lib/labs.ts src/content/todos.ts src/content/meta.ts src/data/api.ts src/data/adr.ts src/data/design.ts src/data/glossary.ts src/data/ferramentas.ts src/data/parts.ts src/data/ids.ts src/data/repo/manifesto.ts --bundle --splitting --format=esm --outdir=.tmp --out-extension:.js=.mjs --log-level=error",
+    "test": "node --test \"tests/*.test.mjs\"",
+    "gerar-indice": "node scripts/gerar-indice.mjs",
+    "gerar-meta": "node scripts/gerar-meta.mjs",
+    "gerar-repo": "node scripts/gerar-repo.mjs",
+    "gerar-fonte": "node scripts/gerar-fonte-python.mjs",
+    "vendor-pyodide": "node scripts/vendor-pyodide.mjs",
+    "verificar": "node scripts/verificar.mjs",
+    "estatisticas": "node scripts/estatisticas.mjs",
+    "prebuild": "node scripts/gerar-fonte-python.mjs && node scripts/gerar-indice.mjs && node scripts/gerar-meta.mjs"
+  },
+  "dependencies": {
+    "pyodide": "^314.0.6",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-router-dom": "^7.9.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.13",
+    "@types/react": "^19.1.13",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^5.0.2",
+    "esbuild": "^0.25.9",
+    "playwright": "^1.63.0",
+    "tailwindcss": "^4.1.13",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.5"
+  }
+}

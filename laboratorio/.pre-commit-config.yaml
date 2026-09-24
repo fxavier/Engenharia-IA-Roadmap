@@ -1,0 +1,22 @@
+# Verificações antes de cada commit: as mesmas regras do CI, mais cedo e mais baratas.
+# Instalar uma vez: `uvx pre-commit install` (ou `make instalar`).
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+      - id: check-toml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ["--maxkb=500"]
+      # Uma chave privada num commit é um incidente, mesmo que se apague no commit seguinte.
+      - id: detect-private-key
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.8
+    hooks:
+      - id: ruff-check
+        args: ["--fix"]
+      - id: ruff-format

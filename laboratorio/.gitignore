@@ -1,0 +1,28 @@
+# Ambiente e caches
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Segredos: o .env nunca entra; o .env.example (sem segredos) sim.
+.env
+.env.*
+!.env.example
+
+# Artefactos gerados
+relatorios/
+documentos/*.tmp
+
+# Editores e sistema
+.idea/
+.vscode/
+.DS_Store
+
+# O uv.lock ENTRA no repositório: é ele que torna o `uv sync --frozen` reprodutível.
