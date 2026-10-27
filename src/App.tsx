@@ -15,6 +15,10 @@ const ToolsPage = lazy(() => import('./pages/ToolsPage').then((m) => ({ default:
 const FerramentasPage = lazy(() => import('./pages/FerramentasPage').then((m) => ({ default: m.FerramentasPage })));
 const CasesPage = lazy(() => import('./pages/CasesPage').then((m) => ({ default: m.CasesPage })));
 const GlossaryPage = lazy(() => import('./pages/GlossaryPage').then((m) => ({ default: m.GlossaryPage })));
+const EntrevistaHome = lazy(() => import('./pages/entrevista/EntrevistaHome').then((m) => ({ default: m.EntrevistaHome })));
+const TopicoPage = lazy(() => import('./pages/entrevista/TopicoPage').then((m) => ({ default: m.TopicoPage })));
+const SimulacaoPage = lazy(() => import('./pages/entrevista/SimulacaoPage').then((m) => ({ default: m.SimulacaoPage })));
+const CabulaPage = lazy(() => import('./pages/entrevista/CabulaPage').then((m) => ({ default: m.CabulaPage })));
 const ProgressPage = lazy(() => import('./pages/ProgressPage').then((m) => ({ default: m.ProgressPage })));
 
 function Loading() {
@@ -47,6 +51,11 @@ export default function App() {
           <Route path="/casos" element={<CasesPage />} />
           <Route path="/glossario" element={<GlossaryPage />} />
           <Route path="/progresso" element={<ProgressPage />} />
+          <Route path="/entrevista" element={<EntrevistaHome />} />
+          <Route path="/entrevista/t/:id" element={<TopicoPage />} />
+          <Route path="/entrevista/simulacao" element={<SimulacaoPage />} />
+          <Route path="/entrevista/simulacao/:id" element={<SimulacaoPage />} />
+          <Route path="/entrevista/cabula" element={<CabulaPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>

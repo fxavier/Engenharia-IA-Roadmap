@@ -1,3 +1,4 @@
+import { EntrevistaBanner } from '../components/entrevista/EntrevistaBanner';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BY_PART, TOTAL, partStats, carregarAgregados } from '../content';
@@ -100,6 +101,8 @@ export function ProgressPage() {
         os tópicos onde convém voltar atrás. Fica guardado apenas no teu browser, neste dispositivo: nada sai
         daqui e não há conta nenhuma por trás.
       </p>
+
+      <div className="mt-6"><EntrevistaBanner variante="compacta" /></div>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {cartoes.map((x) => (

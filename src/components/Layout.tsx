@@ -4,6 +4,7 @@ import { META, BY_PART } from '../content';
 import { PARTS } from '../data/parts';
 import { useProgress, themeStore, useTheme } from '../lib/progress';
 import { CommandPalette } from './CommandPalette';
+import { useEntrevista } from '../entrevista/progresso';
 
 interface NavItem { to: string; label: string; icon: string }
 
@@ -13,6 +14,12 @@ const NAV_PROJECTO: NavItem[] = [
   { to: '/decisoes', label: 'Decisões (ADR)', icon: '§' },
   { to: '/ferramentas', label: 'Ferramentas do agente', icon: '⛭' },
   { to: '/repositorio', label: 'Repositório', icon: '⌗' },
+];
+
+const NAV_ENTREVISTA: NavItem[] = [
+  { to: '/entrevista', label: 'Preparação', icon: '◉' },
+  { to: '/entrevista/simulacao', label: 'Simulação cronometrada', icon: '⏱' },
+  { to: '/entrevista/cabula', label: 'Cábula', icon: '≡' },
 ];
 
 const NAV_PRATICA: NavItem[] = [
@@ -32,14 +39,14 @@ function linkCls(isActive: boolean) {
   }`;
 }
 
-function NavGroup({ title, items, onNavigate }: { title: string; items: NavItem[]; onNavigate?: () => void }) {
+function NavGroup({ title, items, onNavigate, badge }: { title: string; items: NavItem[]; onNavigate?: () => void; badge?: string }) {
   return (
     <div>
-      <p className="eyebrow mb-1.5 px-2.5">{title}</p>
+      <p className="eyebrow mb-1.5 flex items-center gap-2 px-2.5">{title}{badge && <span className="chip bg-rose-500/14 px-1.5 text-[0.56rem] tracking-normal text-rose-700 normal-case dark:text-rose-300">{badge}</span>}</p>
       <ul className="space-y-0.5">
         {items.map((n) => (
           <li key={n.to}>
-            <NavLink to={n.to} onClick={onNavigate} className={({ isActive }) => linkCls(isActive)}>
+            <NavLink to={n.to} end onClick={onNavigate} className={({ isActive }) => linkCls(isActive)}>
               <span aria-hidden className="w-4 text-center font-mono text-[0.72rem] opacity-60">{n.icon}</span>
               {n.label}
             </NavLink>
@@ -52,6 +59,7 @@ function NavGroup({ title, items, onNavigate }: { title: string; items: NavItem[
 
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const state = useProgress();
+  const activa = !!useEntrevista().activa;
   const [abertas, setAbertas] = useState<Record<string, boolean>>({});
   const location = useLocation();
   const actual = location.pathname.startsWith('/modulo/') ? location.pathname.slice(8) : '';
@@ -71,6 +79,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         Início
       </NavLink>
       <NavGroup title="O projecto" items={NAV_PROJECTO} onNavigate={onNavigate} />
+      <NavGroup title="Entrevista" items={NAV_ENTREVISTA} onNavigate={onNavigate} badge={activa ? 'ronda em curso' : undefined} />
       <NavGroup title="Praticar" items={NAV_PRATICA} onNavigate={onNavigate} />
 
       <div>
@@ -223,6 +232,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
           <div className="flex items-center gap-1.5 md:ml-auto">
             <Link to="/playground" className="btn btn-primary btn-sm hidden sm:inline-flex">▶ Playground</Link>
+            <Link to="/entrevista" className="btn btn-ghost btn-sm hidden md:inline-flex">◉ Entrevista</Link>
             <Link to="/decisoes" className="btn btn-ghost btn-sm hidden xl:inline-flex">§ Decisões</Link>
             <button className="btn btn-ghost btn-sm" onClick={() => themeStore.toggle()} aria-label={theme === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'}>
               {theme === 'dark' ? '☀' : '☾'}
