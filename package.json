@@ -18,7 +18,9 @@
     "vendor-pyodide": "node scripts/vendor-pyodide.mjs",
     "verificar": "node scripts/verificar.mjs",
     "estatisticas": "node scripts/estatisticas.mjs",
-    "prebuild": "node scripts/gerar-fonte-python.mjs && node scripts/gerar-indice.mjs && node scripts/gerar-meta.mjs"
+    "gerar-meta-entrevista": "node scripts/gerar-meta-entrevista.mjs",
+    "verificar-entrevista": "node scripts/verificar-entrevista.mjs",
+    "prebuild": "node scripts/gerar-fonte-python.mjs && node scripts/gerar-indice.mjs && node scripts/gerar-meta.mjs && node scripts/gerar-meta-entrevista.mjs"
   },
   "dependencies": {
     "pyodide": "^314.0.6",

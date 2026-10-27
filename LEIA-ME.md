@@ -28,6 +28,11 @@ Opcional: `npm run vendor-pyodide -- --wheels` descarrega também o numpy para c
   galeria dos 29 simuladores.
 - **Glossário** (360+ termos), **28 ADRs** em MADR, desenho do sistema, 12 ferramentas do agente,
   API de 14 endpoints, pesquisa global (Ctrl+K), progresso local, tema claro/escuro.
+- **Preparação para entrevista de AI engineer** (`/entrevista`): 33 tópicos em 6 blocos e 322 perguntas reais
+  (conceito, trade-off, system design, código ao vivo, debugging, comportamental), cada uma com resposta-modelo,
+  rubrica de auto-avaliação, perguntas de seguimento e sinais de alarme; cábula por tópico; **simulação
+  cronometrada** (triagem, aprofundamento, GenAI system design, código, debugging, comportamental, loop completo
+  ou personalizada) com perguntas de seguimento, relatório lado a lado e histórico. Tudo guardado só no browser.
 - **Laboratório real** em `laboratorio/`: FastAPI + LangChain 1.x + LangGraph 1.x + PostgreSQL/pgvector
   + Ollama, com `docker compose`, 121 testes que correm offline, evals com gate e GitHub Actions.
   Ver `laboratorio/README.md`.
@@ -42,6 +47,9 @@ Opcional: `npm run vendor-pyodide -- --wheels` descarrega também o numpy para c
 | `npm run gerar-repo` | regenera a vista do laboratório depois de mexer em `laboratorio/` |
 | `cd laboratorio && make testes` | testes do laboratório |
 
-O `CONTRATO.md` descreve como escrever ou alterar módulos.
+| `node scripts/verificar-entrevista.mjs --todos` | valida os tópicos de entrevista contra o `CONTRATO-ENTREVISTA.md` |
+| `npm run gerar-meta-entrevista` | regenera o índice leve da área «Entrevista» (também corre no `build`) |
+
+O `CONTRATO.md` descreve como escrever ou alterar módulos; o `CONTRATO-ENTREVISTA.md`, como escrever tópicos de entrevista.
 
 Copyright 2026, Feito por Xavier Francisco

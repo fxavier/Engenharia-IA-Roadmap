@@ -8,6 +8,7 @@ import { useProgress } from '../lib/progress';
 import { RichText } from '../components/RichText';
 import type { IntencaoSpec } from '../types';
 import { Bolha, CAMINHO } from '../components/Conversa';
+import { EntrevistaBanner } from '../components/entrevista/EntrevistaBanner';
 
 const NUM = new Intl.NumberFormat('pt-PT');
 
@@ -169,6 +170,8 @@ export function Home() {
             })}
           </div>
         </section>
+
+        <div className="pb-14"><EntrevistaBanner /></div>
 
         {/* ============================================================ intenções */}
         <section className="grid gap-8 pb-14 lg:grid-cols-[1fr_1.1fr]">

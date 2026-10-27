@@ -1,4 +1,7 @@
 import { carregarAgregados } from '../content';
+import { carregarTodos as carregarTopicosEntrevista } from '../entrevista';
+import { TIPOS } from '../entrevista/blocos';
+import type { TopicoEntrevista } from '../types';
 import { GLOSSARY } from '../data/glossary';
 import { ENDPOINTS } from '../data/api';
 import { ADRS } from '../data/adr';
@@ -6,7 +9,7 @@ import { FERRAMENTAS, FERRAMENTA_DE } from '../data/ferramentas';
 import { WIDGETS } from '../components/widgets';
 import type { Block, WidgetId } from '../types';
 
-export type ResultKind = 'modulo' | 'seccao' | 'caso' | 'termo' | 'simulador' | 'ferramenta' | 'endpoint' | 'lab' | 'adr';
+export type ResultKind = 'modulo' | 'seccao' | 'caso' | 'termo' | 'simulador' | 'ferramenta' | 'endpoint' | 'lab' | 'adr' | 'topico' | 'pergunta';
 
 export interface SearchResult {
   kind: ResultKind;
@@ -28,8 +31,8 @@ let index: Entry[] | null = null;
  *  o leitor abre a pesquisa — não no arranque da aplicação. */
 export async function prepararIndice(): Promise<void> {
   if (index) return;
-  const a = await carregarAgregados();
-  index = build(a);
+  const [a, ts] = await Promise.all([carregarAgregados(), carregarTopicosEntrevista()]);
+  index = [...build(a), ...construirEntrevista(ts)];
 }
 
 type Agregados = Awaited<ReturnType<typeof carregarAgregados>>;
@@ -116,7 +119,21 @@ function build(a: Agregados): Entry[] {
   return out;
 }
 
+function construirEntrevista(ts: TopicoEntrevista[]): Entry[] {
+  const out: Entry[] = [];
+  for (const t of ts) {
+    out.push(entrada('topico', `${t.icon} ${t.titulo}`, `Entrevista · tópico ${t.numero} · ${t.resumo}`, `#/entrevista/t/${t.id}`,
+      [t.titulo, t.resumo, ...t.essencial].join(' ')));
+    for (const p of t.perguntas) {
+      out.push(entrada('pergunta', p.titulo, `${TIPOS[p.tipo].nome} · ${t.titulo}`, `#/entrevista/t/${t.id}?p=${p.id}`,
+        [p.titulo, p.enunciado, p.contexto ?? '', ...p.rubrica.criterios, ...p.resposta.map(textoDoBloco)].join(' ')));
+    }
+  }
+  return out;
+}
+
 const WEIGHT: Record<ResultKind, number> = {
+  topico: 2.6, pergunta: 2.1,
   modulo: 3, seccao: 2, caso: 2.4, lab: 2.4, adr: 2.4, endpoint: 2.2, simulador: 2, ferramenta: 2.2, termo: 1.6,
 };
 

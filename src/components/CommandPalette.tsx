@@ -15,9 +15,11 @@ const KIND_LABEL: Record<SearchResult['kind'], string> = {
   adr: 'Decisão',
   endpoint: 'Endpoint',
   lab: 'Laboratório',
+  topico: 'Entrevista',
+  pergunta: 'Pergunta',
 };
 
-const SUGESTOES = ['RRF', 'pgvector', 'interrupt', 'faithfulness', 'reembolso', 'SSE', 'Dockerfile', 'prompt injection'];
+const SUGESTOES = ['RRF', 'pgvector', 'interrupt', 'faithfulness', 'reembolso', 'SSE', 'KV cache', 'system design'];
 
 export function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [q, setQ] = useState('');

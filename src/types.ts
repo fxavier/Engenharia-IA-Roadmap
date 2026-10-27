@@ -711,3 +711,73 @@ export interface PartMeta {
   blurb: string;
   accent: string;
 }
+
+/* ================================================================ entrevista */
+
+/** Os seis blocos da área «Entrevista» (preparação para entrevista de AI engineer). */
+export type BlocoEntrevistaId = 'llm' | 'rag' | 'agentes' | 'avaliacao' | 'producao' | 'rondas';
+
+/** O formato da pergunta — decide o tempo sugerido e em que rondas da simulação entra. */
+export type TipoPergunta = 'conceito' | 'tradeoff' | 'design' | 'codigo' | 'debug' | 'comportamental';
+
+/** Nível a partir do qual a pergunta costuma aparecer. */
+export type NivelPergunta = 'pleno' | 'senior' | 'staff';
+
+/** Blocos permitidos numa resposta-modelo (subconjunto de `Block`). */
+export type BlocoResposta = Extract<
+  Block,
+  { type: 'p' | 'h' | 'list' | 'code' | 'table' | 'callout' | 'steps' | 'compare' | 'terms' | 'diagram' | 'adr' | 'refs' }
+>;
+
+export interface RubricaPergunta {
+  /** O que o entrevistador procura: 3 a 6 pontos verificáveis, cada um uma frase. */
+  criterios: string[];
+  /** Como soa uma resposta fraca (o que falta ou o que está errado). */
+  fraco: string;
+  /** Como soa uma resposta sólida de quem já fez isto em produção. */
+  solido: string;
+  /** O que distingue uma resposta excelente (sénior/staff) de uma sólida. */
+  excelente: string;
+}
+
+export interface PerguntaEntrevista {
+  /** `p-<topicoId>-NN`. */
+  id: string;
+  tipo: TipoPergunta;
+  nivel: NivelPergunta;
+  /** Título curto para listas (até ~70 caracteres). */
+  titulo: string;
+  /** O que o entrevistador diz, tal e qual. */
+  enunciado: string;
+  /** Cenário, restrições ou números dados ao candidato (design, debug, código). */
+  contexto?: string;
+  /** Tempo de resposta sugerido, em minutos. */
+  minutos: number;
+  /** Uma pista que não dá a resposta. */
+  dica?: string;
+  /** A resposta-modelo. */
+  resposta: BlocoResposta[];
+  rubrica: RubricaPergunta;
+  /** Perguntas de seguimento que o entrevistador faz a seguir (2 a 4). */
+  seguimento: string[];
+  /** Frases ou atitudes que custam a vaga (2 a 4). */
+  sinaisAlarme: string[];
+  /** Ids de módulos do tutorial para rever o tema. */
+  modulos?: string[];
+}
+
+export interface TopicoEntrevista {
+  /** Slug, igual ao nome do ficheiro sem o prefixo `tNN-`. */
+  id: string;
+  numero: number;
+  bloco: BlocoEntrevistaId;
+  titulo: string;
+  /** Uma ou duas frases: o que este tópico cobre e porque é perguntado. */
+  resumo: string;
+  icon: string;
+  /** Ids de módulos do tutorial relacionados. */
+  modulos: string[];
+  /** Cábula: 6 a 10 factos, fórmulas ou frases que tens de saber dizer de cor. */
+  essencial: string[];
+  perguntas: PerguntaEntrevista[];
+}

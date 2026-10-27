@@ -1,3 +1,4 @@
+import { EntrevistaBanner } from '../components/entrevista/EntrevistaBanner';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { carregarModulo, moduleNeighbours } from '../content';
@@ -115,6 +116,8 @@ export function ModulePage() {
             {module.tags.map((t) => <span key={t} className="chip border border-soft bg-[var(--surface-raised)]/70 text-[0.68rem] text-muted">#{t}</span>)}
           </div>
         </div>
+
+        {module.id === 'entrevista' && <div className="mt-4"><EntrevistaBanner variante="compacta" /></div>}
 
         <div className="mt-4 rounded-2xl border border-soft surface-sunken p-4">
           <p className="mb-2 text-xs font-bold tracking-widest text-muted uppercase">No fim deste módulo sabes</p>
